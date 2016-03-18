@@ -14,7 +14,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-
+#include <strings.h>
+#include "UserInfo.h"
+#include "cJSON.h"
+#include "handle.h"
 
 /* c mysql 
  * apt-get install libmysqlclient-dev 
@@ -26,7 +29,7 @@
 MYSQL* ConnectMysql();
 void InitServer(char *ip, int port);
 void* HandleClient(void*);
-void* HandleMessage(char *buffer);
+void HandleMessage(int sockfd, MYSQL *connect);
 
 MYSQL* ConnectMysql() {
     MYSQL *connect;
@@ -93,17 +96,37 @@ void InitServer(char *ip, int port) {
 
 void* HandleClient(void *args) {
     MYSQL *connect = ConnectMysql();
-    printf("hello world\n");
-    char buffer[256];
-    bzero(buffer, 256);
+    int sockfd = *(int*)(args);
+    
+    printf("--------hello world------------\n");
+    printf("sockfd:%d\n", sockfd);
 
-    while (1) {
-        HandleMessage(buffer);
+    while(1) {
+        HandleMessage(sockfd, connect);
     }
 }
 
-void HandleMessage(char* buffer) {
+void HandleMessage(int sockfd, MYSQL *connect) {
+    cJSON *message;
+    char buffer[256];
 
+    bzero(buffer, 256);
+    recv(sockfd, buffer, 256, 0);
+    printf("JSON info:%s\n", buffer);
+    message = cJSON_Parse(buffer);
+    int type = cJSON_GetObjectItem(message, "type")->valueint;
+    
+    switch(type) {
+        case 1:
+            printf("user register\n");
+            HandleUserRegister(message);
+            break;
+        case 2:
+            printf("user login\n");
+            break;
+        default:
+            break;
+    }
 }
 
 #endif

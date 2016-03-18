@@ -11,7 +11,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "cJSON.h"
 
 typedef struct UserInfo {
     char account[20];

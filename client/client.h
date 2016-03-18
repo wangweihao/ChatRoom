@@ -17,7 +17,6 @@
 #include <strings.h>
 #include "interface.h"
 
-
 void ClientInit(int fd);
 int ConnectServer();
 void Start(char *ip, int port);

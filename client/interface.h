@@ -106,7 +106,7 @@ void UserRegister(int fd) {
     scanf("%s", user.nickname);
     while (1){
         printf("请选择性别 1.男  2.女:\n");
-        scanf("%u", &tsex);
+        scanf("%hd", &tsex);
         switch (tsex) {
             case 1:
                 strncpy(user.sex, "男", 4);
@@ -128,7 +128,7 @@ void UserRegister(int fd) {
         }
     }
     printf("输入年龄:");
-    scanf("%u", &user.age);
+    scanf("%hd", &user.age);
     system("clear");
     printf("注册成功...点击任意键返回主菜单...\n");
     _RegisterUserInfo(&user, fd);
