@@ -16,9 +16,12 @@ int _UserLogin(UserInfo *user, int fd);
 
 int _RegisterUserInfo(UserInfo *user, int fd) {
     cJSON *userinfo;
+    cJSON *retmsg;
+    int ret = 0;
     char *buffer;
     char retbuffer[256];
 
+    bzero(retbuffer, 256);
     printf("用户注册\n");
     
     userinfo = cJSON_CreateObject();
@@ -40,9 +43,19 @@ int _RegisterUserInfo(UserInfo *user, int fd) {
     }
 
     if(recv(fd, retbuffer, 256, 0) <= 0) {
-        printf("注册失败...，请稍后再试...\n");
+        printf("系统错误...，请稍后再试...\n");
     }else {
         printf("%s\n", retbuffer);
+        retmsg = cJSON_Parse(retbuffer);
+        ret = cJSON_GetObjectItem(retmsg, "ret")->valueint;
+        if(ret == 0) {
+            printf("注册成功...\n");
+        } else {
+            printf("注册失败...\n");
+        }
+        system("clear");
+        printf("%s\n", cJSON_GetObjectItem(retmsg, "value")->valuestring);
+        sleep(2);
     }
 
     return 0;
@@ -51,6 +64,8 @@ int _RegisterUserInfo(UserInfo *user, int fd) {
 
 int _UserLogin(UserInfo *user, int fd) {
     cJSON *userinfo;
+    cJSON *retmsg;
+    int ret = 0;
     char *buffer;
     char retbuffer[256];
 
@@ -70,10 +85,19 @@ int _UserLogin(UserInfo *user, int fd) {
     }
 
     if(recv(fd, retbuffer, 256, 0) <= 0) {
-        printf("UserLogin failed\n");
-        printf("%s\n", retbuffer);
+        printf("系统错误...请稍后再试...\n");
     }else {
         printf("%s\n", retbuffer);
+        retmsg = cJSON_Parse(retbuffer);
+        ret = cJSON_GetObjectItem(retmsg, "ret")->valueint;
+        if(ret == 0) {
+            printf("登录成功...\n");
+        } else {
+            printf("登录失败...\n");
+        }
+        system("clear");
+        printf("%s\n", cJSON_GetObjectItem(retmsg, "value")->valuestring);
+        sleep(2);
     }
 
     return 0;

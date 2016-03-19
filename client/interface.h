@@ -112,10 +112,13 @@ void LoginInterface(int fd) {
                 UserMessage(fd);
                 break;
             case 0:
+                system("clear");
                 return;
                 break;
             default:
-                return;
+                printf("输入有误...请重新输入...\n");
+                sleep(1);
+                system("clear");
                 break;
         } 
 

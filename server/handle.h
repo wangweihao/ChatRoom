@@ -19,6 +19,9 @@ void HandleUserLogin(cJSON *message, MYSQL *connect, int fd);
 
 
 void HandleUserRegister(cJSON *message, MYSQL *connect, int fd) {
+    cJSON *ret;
+
+    ret = cJSON_CreateObject();
     char *account = cJSON_GetObjectItem(message, "account")->valuestring;
     char *secret = cJSON_GetObjectItem(message, "secret")->valuestring;
     char *nickname = cJSON_GetObjectItem(message, "nickname")->valuestring;
@@ -26,7 +29,7 @@ void HandleUserRegister(cJSON *message, MYSQL *connect, int fd) {
     uint16_t age = cJSON_GetObjectItem(message, "age")->valueint;
 
     char UserRegisterSql[256];
-    char retbuf[256];
+    char *retbuf;
     strcpy(UserRegisterSql, "insert into UserInfo (account, secret, nickname, sex, age) values (\"");
     strcat(UserRegisterSql, account);
     strcat(UserRegisterSql, "\", \"");
@@ -42,15 +45,19 @@ void HandleUserRegister(cJSON *message, MYSQL *connect, int fd) {
     printf("SQL:%s\n", UserRegisterSql);
 
     if(mysql_query(connect, UserRegisterSql)){
-        strcpy(retbuf, "注册失败，请稍后再试...");
+        cJSON_AddNumberToObject(ret, "ret", 1);
+        cJSON_AddStringToObject(ret, "value", "注册失败，请稍后再试...");
     }else {
-        strcpy(retbuf, "注册用户信息成功...");
+        cJSON_AddNumberToObject(ret, "ret", 1);
+        cJSON_AddStringToObject(ret, "value", "注册用户成功...请登录");
     }
+    retbuf = cJSON_Print(ret);
     send(fd, retbuf, strlen(retbuf), 0);
 }
 
 
 void HandleUserLogin(cJSON *message, MYSQL *connect, int fd) {
+    cJSON *ret;
     MYSQL_RES *res;
     MYSQL_ROW row;
 
@@ -58,10 +65,11 @@ void HandleUserLogin(cJSON *message, MYSQL *connect, int fd) {
     char *secret  = cJSON_GetObjectItem(message, "secret")->valuestring;
 
     char UserLoginSql[256];
-    char retbuf[256];
+    char *retbuf;
 
+    ret = cJSON_CreateObject();
+    
     bzero(UserLoginSql, 256);
-    bzero(retbuf, 256);
 
     strcpy(UserLoginSql, "select count(*) from UserInfo where account = \"");
     strcat(UserLoginSql, account);
@@ -71,6 +79,7 @@ void HandleUserLogin(cJSON *message, MYSQL *connect, int fd) {
 
     printf("SQL:%s\n", UserLoginSql);
 
+    printf("HandleUserLogin\n");
     if(mysql_query(connect, UserLoginSql)) {
         printf("SQL 执行失败...\n");
     }else {
@@ -87,15 +96,18 @@ void HandleUserLogin(cJSON *message, MYSQL *connect, int fd) {
     printf("number:%d\n", num);
     row = mysql_fetch_row(res);
     printf("row:%s\n", row[0]);
-    int ret = strncmp(row[0], "1", 1);
-    printf("ret:%d\n", ret);
+    int retint = strncmp(row[0], "1", 1);
+    printf("ret:%d\n", retint);
     if(strncmp(row[0], "1", 1) == 0) {
+        cJSON_AddNumberToObject(ret, "ret", 0);
+        cJSON_AddStringToObject(ret, "value", "登录成功，正在载入信息...请稍后");
         printf("query ok\n");
-        strcpy(retbuf, "login success.");
     }else {
+        cJSON_AddNumberToObject(ret, "ret", 1);
+        cJSON_AddStringToObject(ret, "value", "登录失败，帐号或密码不正确...");
         printf("query failed\n");
-        strcpy(retbuf, "login failed..");
     }
+    retbuf = cJSON_Print(ret);
     send(fd, retbuf, strlen(retbuf), 0);
 }
 
