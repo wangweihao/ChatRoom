@@ -80,6 +80,48 @@ void MainInterface(int fd) {
 
 }
 
+void LoginInterface(int fd) {
+    int choose;
+
+    system("clear");
+    while (1) {
+        printf("----------------------------------------\n");
+        printf("1.个人信息\n");
+        printf("2.全部好友\n");
+        printf("3.在线好友\n");
+        printf("4.在线群组\n");
+        printf("5.我的消息\n");
+        printf("0.退出（返回主页）\n");
+        printf("----------------------------------------\n");
+        printf("\n\n\n\n\n请选择:");
+        scanf("%d", &choose);
+        switch(choose) {
+            case 1:
+                ViewMyInfo(fd);
+                break;
+            case 2:
+                ShowAllFriend(fd);
+                break;
+            case 3:
+                ShowLifeFriend(fd);
+                break;
+            case 4:
+                ViewOnlineGroup(fd);
+                break;
+            case 5:
+                UserMessage(fd);
+                break;
+            case 0:
+                return;
+                break;
+            default:
+                return;
+                break;
+        } 
+
+    }
+}
+
 /* UserRegister module */
 
 void UserRegister(int fd) {
@@ -145,58 +187,66 @@ void FillPersonInfo(int fd) {
 /* UserLogin module */
 
 void UserLogin(int fd) {
-    char account[20];
-    char secret[20];
+    UserInfo user;
     printf("请输入帐号:");
-    scanf("%s", account);
+    scanf("%s", user.account);
     printf("请输入密码:");
-    scanf("%s", secret);
+    scanf("%s", user.secret);
+    if(_UserLogin(&user, fd) == 0) {
+        LoginInterface(fd);
+    } else {
+        system("clear");
+        printf("login failed,wait...\n");
+        sleep(2);
+        return;
+    }
 }
 
 /* UserLogin -> ViewMyInfo */
 
 void ViewMyInfo(int fd) {
-    printf("浏览个人信息:");
+    printf("浏览个人信息\n");
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend */
 void ShowAllFriend(int fd) {
+    printf("全部好友\n");
 
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend -> AddFriend */
 void AddFriend(int fd) {
-
+    printf("添加好友\n");
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend -> DeleteFriend */
 void DeleteFriend(int fd) {
-
+    printf("删除好友\n");
 }
 
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend */
 void ShowLifeFriend(int fd) {
-
+    printf("显示在线好友\n");
 }
 
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend -> SelectOneFriendChat */
 void SelectOneFriendChat(int fd) {
-
+    printf("选择好友聊天\n");
 }
 
 /* UserLogin -> ViewOnlineGroup */
 void ViewOnlineGroup(int fd) {
-    printf("浏览在线用户:");
+    printf("浏览在线用户\n");
 }
 
 /* UserLogin -> ViewOnlineGroup -> JoinGroupChat */
 void JoinGroupChat(int fd) {
-
+    printf("加入群聊\n");
 }
 
 /* UserLogin -> ViewOnlineGroup -> CreateGroupChat */
 void CreateGroupChat(int fd) {
-
+    printf("创建群聊天\n");
 }
 
 /* UserLogin -> UserMessage */
@@ -206,7 +256,7 @@ void UserMessage(int fd) {
 
 /* UserLogin -> UserMessage -> HandlerMessage */
 void HandlerMessage(int fd) {
-
+    printf("处理消息\n");
 }
 
 

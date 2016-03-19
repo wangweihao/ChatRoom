@@ -96,6 +96,7 @@ void* HandleClient(void *args) {
             break;
         }
     }
+    mysql_close(connect);
 }
 
 int HandleMessage(int sockfd, MYSQL *connect) {
@@ -114,10 +115,11 @@ int HandleMessage(int sockfd, MYSQL *connect) {
     switch(type) {
         case 1:
             printf("user register\n");
-            HandleUserRegister(message, connect);
+            HandleUserRegister(message, connect, sockfd);
             break;
         case 2:
             printf("user login\n");
+            HandleUserLogin(message, connect, sockfd);
             break;
         default:
             break;
