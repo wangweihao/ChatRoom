@@ -26,28 +26,10 @@
 
 #define BACKLOG 1024
 
-MYSQL* ConnectMysql();
 void InitServer(char *ip, int port);
 void* HandleClient(void*);
-void HandleMessage(int sockfd, MYSQL *connect);
+int HandleMessage(int sockfd, MYSQL *connect);
 
-MYSQL* ConnectMysql() {
-    MYSQL *connect;
-
-    connect = mysql_init(NULL);
-    if(connect == NULL) {
-        perror("mysql_init failed\n");
-        exit(1);
-    }
-
-    connect = mysql_real_connect(connect, "localhost", "root", "w13659218813", "ChatRoom", 0, NULL, 0);
-    if(connect != NULL) {
-        printf("connect mysql success!\n");
-    }else {
-        perror("connect mysql error\n");
-        exit(1);
-    }
-}
 
 void InitServer(char *ip, int port) {
     struct sockaddr_in server;
@@ -95,23 +77,36 @@ void InitServer(char *ip, int port) {
 }
 
 void* HandleClient(void *args) {
-    MYSQL *connect = ConnectMysql();
+    MYSQL mysql, *connect;
+    
+
+    mysql_init(&mysql);
+    if(!(connect = mysql_real_connect(&mysql, "localhost", "root", "w13659218813", "ChatRoom", 0, NULL, 0))) {
+        perror("mysql connect error");
+        return NULL;
+    }
+
     int sockfd = *(int*)(args);
     
     printf("--------hello world------------\n");
     printf("sockfd:%d\n", sockfd);
 
     while(1) {
-        HandleMessage(sockfd, connect);
+        if(HandleMessage(sockfd, connect) == 0) {
+            break;
+        }
     }
 }
 
-void HandleMessage(int sockfd, MYSQL *connect) {
+int HandleMessage(int sockfd, MYSQL *connect) {
     cJSON *message;
     char buffer[256];
 
     bzero(buffer, 256);
-    recv(sockfd, buffer, 256, 0);
+    if(recv(sockfd, buffer, 256, 0) == 0) {
+        printf("客户端退出...\n");
+        return 0;
+    }
     printf("JSON info:%s\n", buffer);
     message = cJSON_Parse(buffer);
     int type = cJSON_GetObjectItem(message, "type")->valueint;
@@ -119,7 +114,7 @@ void HandleMessage(int sockfd, MYSQL *connect) {
     switch(type) {
         case 1:
             printf("user register\n");
-            HandleUserRegister(message);
+            HandleUserRegister(message, connect);
             break;
         case 2:
             printf("user login\n");
@@ -127,6 +122,7 @@ void HandleMessage(int sockfd, MYSQL *connect) {
         default:
             break;
     }
+    return 1;
 }
 
 #endif
