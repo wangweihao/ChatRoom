@@ -218,6 +218,7 @@ void ViewMyInfo(int fd) {
     _ViewMyInfo(myinfo.account, fd);
     printf("\n\n\n\n按任意键返回上一层:\n");
     getchar();
+    getchar();
     LoginInterface(fd);
 }
 
@@ -244,6 +245,11 @@ void DeleteFriend(int fd) {
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend */
 void ShowLifeFriend(int fd) {
     printf("显示在线好友\n");
+    _ShowLifeFriend(myinfo.account, fd);
+    printf("\n\n\n\n按任意键返回上一层:\n");
+    getchar();
+    getchar();
+    LoginInterface(fd);
 }
 
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend -> SelectOneFriendChat */

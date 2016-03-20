@@ -17,9 +17,73 @@
 void HandleUserRegister(cJSON *message, MYSQL *connect, int fd);
 void HandleUserLogin(cJSON *message, MYSQL *connect, int fd);
 void HandleViewUserInfo(cJSON *message, MYSQL *connect, int fd);
-
 void HandleShowAllFriend(cJSON *message, MYSQL *connect, int fd);
+void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd);
 
+
+void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd) {
+    printf("HandleShowLifeFriend\n");
+    cJSON *ret;
+    cJSON *allfriend;
+    cJSON *friendarray;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+
+    char GetUserUidSql[256];
+    char GetUserFriendInfo[256];
+
+    ret = cJSON_CreateObject();
+    allfriend = cJSON_CreateArray();
+    friendarray = cJSON_CreateObject();
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    strcpy(GetUserUidSql, "select uid from UserInfo where account = \"");
+    strcat(GetUserUidSql, account);
+    strcat(GetUserUidSql, "\";");
+    printf("GetUserUidSql:%s\n", GetUserUidSql);
+    if(mysql_query(connect, GetUserUidSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    printf("%s\n", row[0]);
+
+    strcpy(GetUserFriendInfo, "select nickname from UserFriend where uid = \"");
+    strcat(GetUserFriendInfo, row[0]);
+    strcat(GetUserFriendInfo, "\" and online = 1;");
+    printf("GetUserFriendInfo:%s\n", GetUserFriendInfo);
+    if(mysql_query(connect, GetUserFriendInfo)) {
+        printf("查询全部好友失败...\n");
+    }else {
+        printf("查询全部好友成功...\n");
+    }
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    while(row = mysql_fetch_row(res)) {
+        cJSON *onefriend;
+        onefriend = cJSON_CreateObject();
+        printf("nickname:%s\n", row[0]);
+        cJSON_AddStringToObject(onefriend, "nickname", row[0]);
+        cJSON_AddItemToArray(allfriend, onefriend);
+    }
+    cJSON_AddItemToObject(friendarray, "friend", allfriend);
+    char *friendbuf = cJSON_Print(friendarray);
+    printf("Json All Friend:%s\n", friendbuf);
+    if(send(fd, friendbuf, strlen(friendbuf), 0) <= 0) {
+        perror("send error");
+    }
+}
 
 void HandleShowAllFriend(cJSON *message, MYSQL *connect, int fd) {
     printf("HandleShowAllFriend\n");
@@ -57,7 +121,7 @@ void HandleShowAllFriend(cJSON *message, MYSQL *connect, int fd) {
 
     strcpy(GetUserFriendInfo, "select nickname from UserFriend where uid = \"");
     strcat(GetUserFriendInfo, row[0]);
-    strcat(GetUserFriendInfo, "\"");
+    strcat(GetUserFriendInfo, "\";");
     printf("GetUserFriendInfo:%s\n", GetUserFriendInfo);
     if(mysql_query(connect, GetUserFriendInfo)) {
         printf("查询全部好友失败...\n");

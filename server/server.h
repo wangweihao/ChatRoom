@@ -129,6 +129,10 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             printf("view all friend\n");
             HandleShowAllFriend(message, connect, sockfd);
             break;
+        case 5:
+            printf("view life friend\n");
+            HandleShowLifeFriend(message, connect, sockfd);
+            break;
         default:
             break;
     }
