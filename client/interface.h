@@ -75,6 +75,8 @@ void MainInterface(int fd) {
                 break;
             case 3:
                 ViewMyInfo(fd);
+            case 4:
+                ShowAllFriend(fd);
             default:
                 break;
         }
@@ -216,14 +218,17 @@ void ViewMyInfo(int fd) {
     _ViewMyInfo(myinfo.account, fd);
     printf("\n\n\n\n按任意键返回上一层:\n");
     getchar();
-    getchar();
     LoginInterface(fd);
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend */
 void ShowAllFriend(int fd) {
     printf("全部好友\n");
-
+    _ShowAllFriend(myinfo.account, fd);
+    printf("\n\n\n\n按任意键返回上一层:\n");
+    getchar();
+    getchar();
+    LoginInterface(fd);
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend -> AddFriend */

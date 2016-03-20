@@ -14,6 +14,52 @@
 int _RegisterUserInfo(UserInfo *user, int fd);
 int _UserLogin(UserInfo *user, int fd);
 int _ViewMyInfo(char *account, int fd);
+int _ShowAllFriend(char *account, int fd);
+
+int _ShowAllFriend(char *account, int fd) {
+    cJSON *userinfo;
+    cJSON *retmsg;
+    char *buffer;
+    char retbuffer[1024];
+    int ret = 0;
+
+    bzero(retbuffer, 1024);
+    userinfo = cJSON_CreateObject();
+    cJSON_AddStringToObject(userinfo, "account", account);
+    cJSON_AddNumberToObject(userinfo, "type", 4);
+
+    buffer = cJSON_Print(userinfo);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(length == size) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+
+    if(recv(fd, retbuffer, 1024, 0) <= 0) {
+        printf("系统错误...请稍后再试...\n");
+    }else {
+        //printf("retbuffer:%s\n", retbuffer);       
+        cJSON *friendarray;
+        cJSON *info = cJSON_Parse(retbuffer);
+        int arraysize;
+        /* 获取 JSON 数组 */
+        friendarray = cJSON_GetObjectItem(info, "friend");
+        /* 获取数组大小 */
+        arraysize = cJSON_GetArraySize(friendarray);
+        cJSON *arraylist = friendarray->child;
+        system("clear");
+        printf(" 我的好友\n\n\n");
+        int i = 1;
+        while(arraylist != NULL) {
+            printf("%d.%s\n", i, cJSON_GetObjectItem(arraylist, "nickname")->valuestring);
+            arraylist = arraylist->next;
+            ++i;
+        }
+    }
+}
 
 /* type 3 view self infomation */
 int _ViewMyInfo(char *account, int fd) {
