@@ -13,6 +13,48 @@
 
 int _RegisterUserInfo(UserInfo *user, int fd);
 int _UserLogin(UserInfo *user, int fd);
+int _ViewMyInfo(char *account, int fd);
+
+/* type 3 view self infomation */
+int _ViewMyInfo(char *account, int fd) {
+    cJSON *userinfo;
+    cJSON *retmsg;
+    char *buffer;
+    char retbuffer[256];
+    int ret = 0;
+    
+    userinfo = cJSON_CreateObject();
+    cJSON_AddStringToObject(userinfo, "account", account);
+    cJSON_AddNumberToObject(userinfo, "type", 3);
+
+    buffer = cJSON_Print(userinfo);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(length == size) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+    if(recv(fd, retbuffer, 256, 0) <= 0) {
+        printf("系统错误...请稍后再试...\n");
+    }else {
+        printf("%s\n", retbuffer);
+        retmsg = cJSON_Parse(retbuffer);
+        ret = cJSON_GetObjectItem(retmsg, "ret")->valueint;
+        if(ret == 0) {
+            printf("获取信息成功...\n");
+            system("clear");
+            printf("Info:%s\n", cJSON_GetObjectItem(retmsg, "info")->valuestring);
+            printf("account:%s\n", cJSON_GetObjectItem(retmsg, "account")->valuestring);
+            printf("nickname:%s\n", cJSON_GetObjectItem(retmsg, "nickname")->valuestring);
+            printf("sex:%s\n", cJSON_GetObjectItem(retmsg, "sex")->valuestring);
+            printf("age:%s\n", cJSON_GetObjectItem(retmsg, "age")->valuestring);
+        }else {
+            printf("获取信息失败\n...");
+        }
+    }
+}
 
 int _RegisterUserInfo(UserInfo *user, int fd) {
     cJSON *userinfo;

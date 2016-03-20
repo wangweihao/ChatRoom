@@ -39,6 +39,7 @@ void CreateGroupChat(int fd);
 void UserMessage(int fd);
 void HandlerMessage(int fd);
 
+
 void MainInterface(int fd) {
     int choose;
 
@@ -72,6 +73,8 @@ void MainInterface(int fd) {
             case 2:
                 UserRegister(fd);
                 break;
+            case 3:
+                ViewMyInfo(fd);
             default:
                 break;
         }
@@ -193,6 +196,7 @@ void UserLogin(int fd) {
     UserInfo user;
     printf("请输入帐号:");
     scanf("%s", user.account);
+    strcpy(myinfo.account, user.account);
     printf("请输入密码:");
     scanf("%s", user.secret);
     if(_UserLogin(&user, fd) == 0) {
@@ -209,6 +213,11 @@ void UserLogin(int fd) {
 
 void ViewMyInfo(int fd) {
     printf("浏览个人信息\n");
+    _ViewMyInfo(myinfo.account, fd);
+    printf("\n\n\n\n按任意键返回上一层:\n");
+    getchar();
+    getchar();
+    LoginInterface(fd);
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend */

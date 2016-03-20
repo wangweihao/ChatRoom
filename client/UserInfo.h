@@ -29,4 +29,6 @@ typedef struct Message {
     char msg[256];
 } Message;
 
+UserInfo myinfo;
+
 #endif

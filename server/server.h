@@ -121,6 +121,10 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             printf("user login\n");
             HandleUserLogin(message, connect, sockfd);
             break;
+        case 3:
+            printf("view user info\n");
+            HandleViewUserInfo(message, connect, sockfd);
+            break;
         default:
             break;
     }
