@@ -259,7 +259,28 @@ void SelectOneFriendChat(int fd) {
 
 /* UserLogin -> ViewOnlineGroup */
 void ViewOnlineGroup(int fd) {
+    int choose; 
+
     printf("浏览在线用户\n");
+    _ViewOnlineGroup(fd);
+    printf("1.加入群组\n");
+    printf("2.创建群组\n");
+    printf("0.返回上一级\n");
+    printf("\n\n\n\n请选择:\n");
+    scanf("%d", &choose);
+    switch(choose) {
+        case 1:
+            break;
+        case 2:
+            CreateGroupChat(fd);
+            break;
+        case 0:
+            LoginInterface(fd);
+            break;
+        default:
+            LoginInterface(fd);
+            break;
+    }
 }
 
 /* UserLogin -> ViewOnlineGroup -> JoinGroupChat */
@@ -270,6 +291,12 @@ void JoinGroupChat(int fd) {
 /* UserLogin -> ViewOnlineGroup -> CreateGroupChat */
 void CreateGroupChat(int fd) {
     printf("创建群聊天\n");
+    _CreateGroupChat(myinfo.account, fd);
+    printf("创建成功...\n");
+    printf("\n\n\n\n按任意键返回上一层:\n");
+    getchar();
+    getchar();
+    LoginInterface(fd);
 }
 
 /* UserLogin -> UserMessage */

@@ -16,7 +16,92 @@ int _UserLogin(UserInfo *user, int fd);
 int _ViewMyInfo(char *account, int fd);
 int _ShowAllFriend(char *account, int fd);
 int _ShowLifeFriend(char *account, int fd);
+int _ViewOnlineGroup(int fd);
+int _CreateGroupChat(char *account, int fd);
 
+int _CreateGroupChat(char *account, int fd) {
+    cJSON *info;
+    char* buffer;
+    char name[40];
+    char retbuffer[1024];
+
+    bzero(name, 0);
+    bzero(retbuffer, 0);
+    printf("请输入群组名字:");
+    scanf("%s", name);
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 7);
+    cJSON_AddStringToObject(info, "account", account);
+    cJSON_AddStringToObject(info, "name", name);
+    buffer = cJSON_Print(info);
+    printf("sendjson:%s\n", buffer);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(size == length) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+
+    if(recv(fd, retbuffer, 1024, 0) <= 0) {
+        printf("系统错误...请稍后再试\n");
+        return -1;
+    }else {
+        printf("recv success:%s\n", retbuffer);
+        cJSON *rec = cJSON_Parse(retbuffer);
+        int ret = cJSON_GetObjectItem(rec, "ret")->valueint;
+        if(ret == 0) {
+            printf("%s\n", cJSON_GetObjectItem(rec, "info")->valuestring);
+        }
+    }
+
+}
+
+int _ViewOnlineGroup(int fd) {
+    cJSON *info;
+    cJSON *retmsg;
+    char *buffer;
+    char retbuffer[1024];
+
+    bzero(retbuffer, 0);
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 6);
+    
+    buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(length == size) {
+        printf("send success!\n");
+    }else {
+        printf("send failure!\n");
+    }
+
+    if(recv(fd, retbuffer, 1024, 0) <= 0) {
+        printf("系统错误...请稍后再试...\n");
+    }else {
+        printf("recv success:%s\n", retbuffer);
+        cJSON *rec = cJSON_Parse(retbuffer);
+        int num = cJSON_GetObjectItem(rec, "number")->valueint;
+        system("clear");
+        if(num == 0) {
+            printf("\n群组 \n\n");
+        }else {
+            cJSON *group;
+            int i = 1;
+            group = cJSON_GetObjectItem(rec, "group");
+            cJSON *list = group->child;
+            printf("\n群组 \n\n\n\n");
+            while(list != NULL) {
+                printf("(%d).name:%20s  people:%d\n", i, cJSON_GetObjectItem(list, "name")->valuestring, cJSON_GetObjectItem(list, "number")->valueint);
+                list = list->next;
+                i++;
+            }
+            printf("\n\n\n");
+        }
+    }
+}
 
 int _ShowLifeFriend(char *account, int fd) {
     cJSON *userinfo;

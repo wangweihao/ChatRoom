@@ -12,14 +12,91 @@
 #include "cJSON.h"
 #include "mysql/mysql.h"
 #include <stdio.h>
-
+#include <malloc.h>
+#include <pthread.h>
+#include "list.h"
 
 void HandleUserRegister(cJSON *message, MYSQL *connect, int fd);
 void HandleUserLogin(cJSON *message, MYSQL *connect, int fd);
 void HandleViewUserInfo(cJSON *message, MYSQL *connect, int fd);
 void HandleShowAllFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd);
+void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd);
+void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd);
 
+void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd) {
+    printf("1\n");
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    printf("1\n");
+    char *name = cJSON_GetObjectItem(message, "name")->valuestring;
+    printf("1\n");
+    cJSON *ret;
+    struct Node* one;
+
+    printf("2\n");
+    ret = cJSON_CreateObject();
+    one = (struct Node*)malloc(sizeof(struct Node));
+    if(one == NULL) {
+        perror("malloc error!");
+        return;
+    }
+    strcpy(one->account, account);
+    one->sockfd = fd;
+    one->next = NULL;
+    printf("3\n");
+    pthread_mutex_lock(&onlineGroup.mutex);
+    strcpy(onlineGroup.group[onlineGroup.groupnum].name, name);
+    onlineGroup.group[onlineGroup.groupnum].number = 1;
+    AddGroup(onlineGroup.group[onlineGroup.groupnum].head, one);
+    onlineGroup.groupnum++;
+    pthread_mutex_unlock(&onlineGroup.mutex);
+    printf("4\n");
+    cJSON_AddNumberToObject(ret, "ret", 0);
+    cJSON_AddStringToObject(ret, "info", "创建群组成功");
+    char *buffer = cJSON_Print(ret);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(length == size) {
+        printf("创建群组成功...\n");
+    }else {
+        printf("创建群组失败...\n");
+    }
+    printf("5\n");
+}
+
+void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd) {
+    printf("HandleViewUserInfo\n");
+    printf("message:%s\n", cJSON_Print(message));
+    cJSON *allGroup;
+    cJSON *oneGroup;
+    cJSON *ret;
+    char *retbuffer;
+    int num = onlineGroup.groupnum;
+    int i;
+
+    if(num == 0) {
+        ret = cJSON_CreateObject();
+        cJSON_AddNumberToObject(ret, "number", 0);
+    }else {
+        ret = cJSON_CreateObject();
+        cJSON_AddNumberToObject(ret, "number", num);
+        allGroup = cJSON_CreateArray();
+        for(i = 0; i < num; ++i) {
+            oneGroup = cJSON_CreateObject();
+            cJSON_AddStringToObject(oneGroup, "name", onlineGroup.group[i].name);
+            cJSON_AddNumberToObject(oneGroup, "number", onlineGroup.group[i].number);
+            cJSON_AddItemToArray(allGroup, oneGroup);
+        }
+        cJSON_AddItemToObject(ret, "group", allGroup);
+    }
+    printf("group:%s\n", cJSON_Print(ret));
+
+    retbuffer = cJSON_Print(ret);
+    if(send(fd, retbuffer, strlen(retbuffer), 0) <= 0) {
+        perror("send error");
+    }
+}
 
 void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd) {
     printf("HandleShowLifeFriend\n");

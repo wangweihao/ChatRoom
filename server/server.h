@@ -18,6 +18,7 @@
 #include "UserInfo.h"
 #include "cJSON.h"
 #include "handle.h"
+#include "list.h"
 
 /* c mysql 
  * apt-get install libmysqlclient-dev 
@@ -29,7 +30,21 @@
 void InitServer(char *ip, int port);
 void* HandleClient(void*);
 int HandleMessage(int sockfd, MYSQL *connect);
+void InitOnlineGroup();
 
+
+void InitOnlineGroup() {
+    int i;
+    onlineGroup.groupnum = 0;
+    /* init mutex */
+    pthread_mutex_init(&onlineGroup.mutex, NULL);
+    for(i = 0; i < MAXGROUP; ++i) {
+        bzero(onlineGroup.group[i].name, 0);
+        /* create and init head Node */
+        onlineGroup.group[i].head = CreateGroup();
+        onlineGroup.group[i].number = 0;
+    }
+}
 
 void InitServer(char *ip, int port) {
     struct sockaddr_in server;
@@ -132,6 +147,14 @@ int HandleMessage(int sockfd, MYSQL *connect) {
         case 5:
             printf("view life friend\n");
             HandleShowLifeFriend(message, connect, sockfd);
+            break;
+        case 6:
+            printf("view online group\n");
+            HandleViewOnlineGroup(message, connect, sockfd);
+            break;
+        case 7:
+            printf("create online group\n");
+            HandleCreateGroup(message, connect, sockfd);
             break;
         default:
             break;

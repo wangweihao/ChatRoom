@@ -10,5 +10,6 @@
 #include "server.h"
 
 int main(int argc, char **argv) {
+    InitOnlineGroup();
     InitServer(argv[1], atoi(argv[2]));
 }

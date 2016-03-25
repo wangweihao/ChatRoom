@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define MAXGROUP 100
+
 typedef struct UserInfo {
     char account[20];
     char secret[20];
@@ -27,5 +29,20 @@ typedef struct Message {
     uint16_t length;
     char msg[256];
 } Message;
+
+typedef struct Group {
+    char name[40];
+    struct Node *head;
+    int number;
+} Group;
+
+
+typedef struct OnlineGroup {
+    Group group[MAXGROUP];
+    int groupnum;
+    pthread_mutex_t mutex;
+} OnlineGroup;
+
+OnlineGroup onlineGroup;
 
 #endif
