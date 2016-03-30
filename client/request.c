@@ -18,6 +18,48 @@ int _ShowAllFriend(char *account, int fd);
 int _ShowLifeFriend(char *account, int fd);
 int _ViewOnlineGroup(int fd);
 int _CreateGroupChat(char *account, int fd);
+int _UserMessage(char *account, int fd);
+
+int _UserMessage(char *account, int fd) {
+    cJSON *info;
+    char *buffer;
+    char retbuffer[1024];
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 8);
+    cJSON_AddStringToObject(info, "account", account);
+    buffer = cJSON_Print(info);
+    printf("sendjson:%s\n", buffer);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(size == length) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+    
+    if(recv(fd, retbuffer, 1024, 0) <= 0) {
+        printf("系统错误，请稍后再试...\n");
+    }else {
+        printf("接受JSON:%s\n", retbuffer);
+        cJSON *rec = cJSON_Parse(retbuffer);
+        int num = cJSON_GetObjectItem(rec, "number")->valueint;
+        if(num == 0) {
+            printf("暂时无最新消息...\n");
+            return 0;
+        }
+        cJSON *mesg = cJSON_GetObjectItem(rec, "message");
+        cJSON *list = mesg->child;
+        int i = 1;
+        while(list != NULL) {
+            printf("(%d).%s\n", i, cJSON_GetObjectItem(list, "msg")->valuestring);
+            list = list->next;
+            i++;
+        }
+        printf("\n\n\n");
+    }
+}
 
 int _CreateGroupChat(char *account, int fd) {
     cJSON *info;

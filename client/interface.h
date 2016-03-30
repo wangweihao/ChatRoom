@@ -302,6 +302,11 @@ void CreateGroupChat(int fd) {
 /* UserLogin -> UserMessage */
 void UserMessage(int fd) {
     printf("用户信息:");
+    _UserMessage(myinfo.account, fd);
+    printf("\n\n\n\n按任意键返回上一层:\n");
+    getchar();
+    getchar();
+    LoginInterface(fd);
 }
 
 /* UserLogin -> UserMessage -> HandlerMessage */

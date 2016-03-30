@@ -156,6 +156,10 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             printf("create online group\n");
             HandleCreateGroup(message, connect, sockfd);
             break;
+        case 8:
+            printf("User Message\n");
+            HandleUserMessage(message, connect, sockfd);
+            break;
         default:
             break;
     }

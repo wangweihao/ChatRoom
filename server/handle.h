@@ -23,17 +23,125 @@ void HandleShowAllFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd);
 void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd);
+void HandleUserMessage(cJSON *message, MYSQL *connect, int fd);
+
+
+void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    cJSON *ret;
+    cJSON *array;
+
+    char GetUserIdSql[128];
+    char GetUserAccountSql[128];
+    char GetUserMessageSql[128];
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    
+    MYSQL_RES *ress;
+    MYSQL_ROW rows;
+
+    ret = cJSON_CreateObject();
+    array = cJSON_CreateObject();
+
+    strcpy(GetUserIdSql, "select uid from UserInfo where account = \"");
+    strcat(GetUserIdSql, account);
+    strcat(GetUserIdSql, "\";");
+
+    if(mysql_query(connect, GetUserIdSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+    
+    printf("1\n");
+
+    row = mysql_fetch_row(res);
+    printf("%s\n", row[0]);
+    
+    strcpy(GetUserMessageSql, "select friendId from UserMessage where uid = \"");
+    strcat(GetUserMessageSql, row[0]);
+    strcat(GetUserMessageSql, "\";");
+
+    if(mysql_query(connect, GetUserMessageSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    printf("2\n");
+    if(!(ress = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+    int retinfo[128];
+    int number = 0;
+    printf("4\n");
+    while(rows = mysql_fetch_row(ress)) {
+        
+        printf("5\n");
+        number++;
+        MYSQL_RES *rest;
+        MYSQL_ROW rowt;
+
+        cJSON *one;
+        one = cJSON_CreateObject();
+        strcpy(GetUserAccountSql, "select account, nickname from UserInfo where uid = \"");
+        strcat(GetUserAccountSql, rows[0]);
+        strcat(GetUserAccountSql, "\";");
+        if(mysql_query(connect, GetUserMessageSql)) {
+            printf("查询消息信息失败...\n");
+        }else {
+            printf("查询消息信息成功...\n");
+        }
+        if(!(rest = mysql_store_result(connect))) {
+            printf("获取结果失败...\n");
+        }else {
+            printf("获取结果成功...\n");
+        }
+
+        printf("6\n");
+        rowt = mysql_fetch_row(rest);
+        printf("7\n");
+        char buf[128];
+        strcpy(buf, "帐号:");
+        strcat(buf, rowt[0]);
+        strcat(buf, " 用户名:");
+        strcat(buf, rowt[1]);
+        strcat(buf, " 请求添加您为好友");
+        cJSON_AddStringToObject(one, "msg", buf);
+        cJSON_AddItemToArray(array, one);
+        bzero(buf, 0);
+        bzero(GetUserAccountSql, 0);
+        printf("8\n");
+    }
+    cJSON_AddNumberToObject(ret, "number", number);
+    cJSON_AddItemToObject(ret, "message", array);
+    printf("retJSON:%s\n", cJSON_Print(ret));
+
+    char *buffer = cJSON_Print(ret);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(length == size) {
+        printf("查询用户消息成功...\n");
+    }else {
+        printf("查询用户消息失败...\n");
+    }
+}
 
 void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd) {
-    printf("1\n");
     char *account = cJSON_GetObjectItem(message, "account")->valuestring;
-    printf("1\n");
     char *name = cJSON_GetObjectItem(message, "name")->valuestring;
-    printf("1\n");
     cJSON *ret;
     struct Node* one;
 
-    printf("2\n");
     ret = cJSON_CreateObject();
     one = (struct Node*)malloc(sizeof(struct Node));
     if(one == NULL) {
@@ -43,14 +151,12 @@ void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd) {
     strcpy(one->account, account);
     one->sockfd = fd;
     one->next = NULL;
-    printf("3\n");
     pthread_mutex_lock(&onlineGroup.mutex);
     strcpy(onlineGroup.group[onlineGroup.groupnum].name, name);
     onlineGroup.group[onlineGroup.groupnum].number = 1;
     AddGroup(onlineGroup.group[onlineGroup.groupnum].head, one);
     onlineGroup.groupnum++;
     pthread_mutex_unlock(&onlineGroup.mutex);
-    printf("4\n");
     cJSON_AddNumberToObject(ret, "ret", 0);
     cJSON_AddStringToObject(ret, "info", "创建群组成功");
     char *buffer = cJSON_Print(ret);
@@ -62,7 +168,6 @@ void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd) {
     }else {
         printf("创建群组失败...\n");
     }
-    printf("5\n");
 }
 
 void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd) {
