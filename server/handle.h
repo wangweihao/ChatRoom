@@ -16,6 +16,17 @@
 #include <pthread.h>
 #include "list.h"
 
+#define MAXCON 100
+
+typedef struct OnlinePeople {
+    char name[128];
+    int sockfd;
+    int flag;
+}OnlinePeople;
+
+OnlinePeople onlinePeople[MAXCON];
+int onlineCount = 0;
+
 void HandleUserRegister(cJSON *message, MYSQL *connect, int fd);
 void HandleUserLogin(cJSON *message, MYSQL *connect, int fd);
 void HandleViewUserInfo(cJSON *message, MYSQL *connect, int fd);
@@ -24,7 +35,41 @@ void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd);
 void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd);
 void HandleUserMessage(cJSON *message, MYSQL *connect, int fd);
+void HandleChat(cJSON *message, MYSQL *connect, int fd);
+void HandleChatMessage(cJSON *message, MYSQL *connect, int fd);
 
+//-------------------------------------
+void HandleChatMessage(cJSON *message, MYSQL *connect, int fd) {
+    printf("Handle Chat Message\n");
+    int index = 0;
+    cJSON *ret;
+
+    char *name = cJSON_GetObjectItem(message, "name")->valuestring;
+    char *myName = cJSON_GetObjectItem(message, "myName")->valuestring;
+    char *info = cJSON_GetObjectItem(message, "info")->valuestring;
+    for(; index < MAXCON; ++index) {
+       if(strcmp(name, onlinePeople[index].name) == 0) {
+            break; 
+       } 
+    }
+    
+    ret = cJSON_CreateObject();
+    cJSON_AddStringToObject(ret, "info", info);
+    cJSON_AddStringToObject(ret, "name", name);
+    char *buffer = cJSON_Print(ret);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(onlinePeople[index].sockfd, buffer, length, 0);
+    if (size == length) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+}
+
+void HandleChat(cJSON *message, MYSQL *connect, int fd) {
+    printf("Handle Chat\n");
+}
 
 void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
     char *account = cJSON_GetObjectItem(message, "account")->valuestring;
@@ -59,7 +104,6 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
         printf("获取结果成功...\n");
     }
     
-    printf("1\n");
 
     row = mysql_fetch_row(res);
     printf("%s\n", row[0]);
@@ -74,7 +118,6 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
         printf("查询成功...\n");
     }
 
-    printf("2\n");
     if(!(ress = mysql_store_result(connect))) {
         printf("获取结果失败...\n");
     }else {
@@ -82,10 +125,8 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
     }
     int retinfo[128];
     int number = 0;
-    printf("4\n");
     while(rows = mysql_fetch_row(ress)) {
         
-        printf("5\n");
         number++;
         MYSQL_RES *rest;
         MYSQL_ROW rowt;
@@ -95,7 +136,7 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
         strcpy(GetUserAccountSql, "select account, nickname from UserInfo where uid = \"");
         strcat(GetUserAccountSql, rows[0]);
         strcat(GetUserAccountSql, "\";");
-        if(mysql_query(connect, GetUserMessageSql)) {
+        if(mysql_query(connect, GetUserAccountSql)) {
             printf("查询消息信息失败...\n");
         }else {
             printf("查询消息信息成功...\n");
@@ -106,10 +147,10 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
             printf("获取结果成功...\n");
         }
 
-        printf("6\n");
         rowt = mysql_fetch_row(rest);
-        printf("7\n");
         char buf[128];
+        printf("rowt[0]:%s\n", rowt[0]);
+        printf("rowt[1]:%s\n", rowt[1]);
         strcpy(buf, "帐号:");
         strcat(buf, rowt[0]);
         strcat(buf, " 用户名:");
@@ -117,9 +158,8 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
         strcat(buf, " 请求添加您为好友");
         cJSON_AddStringToObject(one, "msg", buf);
         cJSON_AddItemToArray(array, one);
-        bzero(buf, 0);
-        bzero(GetUserAccountSql, 0);
-        printf("8\n");
+        bzero(buf, 128);
+        bzero(GetUserAccountSql, 128);
     }
     cJSON_AddNumberToObject(ret, "number", number);
     cJSON_AddItemToObject(ret, "message", array);
@@ -202,7 +242,7 @@ void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd) {
         perror("send error");
     }
 }
-
+,
 void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd) {
     printf("HandleShowLifeFriend\n");
     cJSON *ret;
@@ -463,6 +503,13 @@ void HandleUserLogin(cJSON *message, MYSQL *connect, int fd) {
         cJSON_AddNumberToObject(ret, "ret", 0);
         cJSON_AddStringToObject(ret, "value", "登录成功，正在载入信息...请稍后");
         printf("query ok\n");
+        if (onlineCount == MAXCON) {
+            onlineCount = 0;
+        }else {
+            onlinePeople[onlineCount].sockfd = fd;
+            onlinePeople[onlineCount].flag = 1;
+            strcpy(onlinePeople[onlineCount].name, account);
+        }
     }else {
         cJSON_AddNumberToObject(ret, "ret", 1);
         cJSON_AddStringToObject(ret, "value", "登录失败，帐号或密码不正确...");

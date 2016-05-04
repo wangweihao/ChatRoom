@@ -27,6 +27,7 @@
 
 #define BACKLOG 1024
 
+
 void InitServer(char *ip, int port);
 void* HandleClient(void*);
 int HandleMessage(int sockfd, MYSQL *connect);
@@ -159,6 +160,17 @@ int HandleMessage(int sockfd, MYSQL *connect) {
         case 8:
             printf("User Message\n");
             HandleUserMessage(message, connect, sockfd);
+            break;
+        case 9:
+            printf("Handler User Message\n");
+            break;
+        case 10:
+            printf("Handler Chat\n");
+            HandleChat(message, connect, sockfd);
+            break;
+        case 11:
+            printf("Handler Chat Message\n");
+            HandleChatMessage(message, connect, sockfd); 
             break;
         default:
             break;
