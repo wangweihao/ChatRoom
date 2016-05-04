@@ -19,6 +19,41 @@ int _ShowLifeFriend(char *account, int fd);
 int _ViewOnlineGroup(int fd);
 int _CreateGroupChat(char *account, int fd);
 int _UserMessage(char *account, int fd);
+int _HandlerMessage(char *account, int fd);
+int _HandlerChat(char *account, int fd);
+
+int _HandlerChat(char *account, int fd) {
+    cJSON *info;
+    char name[128];
+    char *buffer;
+
+            
+    printf("聊天开始\n");
+    printf("输入\"quit\"退出\n");
+    printf("请输入聊天好友姓名:");
+    bzero(name, 128);
+    scanf("%s", name);
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 10);
+    cJSON_AddStringToObject(info, "account", account);
+    cJSON_AddStringToObject(info, "friend", name);
+    buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if(size == length) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");          
+    }
+
+    ChatAndOneFriend(account, name, fd);
+}
+
+int _HandlerMessage(char *account, int fd) {
+    printf("处理消息：_HandlerMessage\n");
+}
 
 int _UserMessage(char *account, int fd) {
     cJSON *info;
@@ -29,7 +64,7 @@ int _UserMessage(char *account, int fd) {
     cJSON_AddNumberToObject(info, "type", 8);
     cJSON_AddStringToObject(info, "account", account);
     buffer = cJSON_Print(info);
-    printf("sendjson:%s\n", buffer);
+    //printf("sendjson:%s\n", buffer);
 
     size_t length = strlen(buffer);
     ssize_t size = send(fd, buffer, length, 0);
@@ -42,7 +77,7 @@ int _UserMessage(char *account, int fd) {
     if(recv(fd, retbuffer, 1024, 0) <= 0) {
         printf("系统错误，请稍后再试...\n");
     }else {
-        printf("接受JSON:%s\n", retbuffer);
+        //printf("接受JSON:%s\n", retbuffer);
         cJSON *rec = cJSON_Parse(retbuffer);
         int num = cJSON_GetObjectItem(rec, "number")->valueint;
         if(num == 0) {
@@ -162,14 +197,16 @@ int _ShowLifeFriend(char *account, int fd) {
     size_t length = strlen(buffer);
     ssize_t size = send(fd, buffer, length, 0);
     if(length == size) {
-        printf("send success!\n");
+        printf("send success!!\n");
     }else {
         printf("send error!\n");
     }
 
+    printf("233333\n");
     if(recv(fd, retbuffer, 1024, 0) <= 0) {
         printf("系统错误...请稍后再试...\n");
     }else {
+        printf("233333\n");
         //printf("retbuffer:%s\n", retbuffer);       
         cJSON *friendarray;
         cJSON *info = cJSON_Parse(retbuffer);
@@ -183,9 +220,17 @@ int _ShowLifeFriend(char *account, int fd) {
         printf(" 在线好友\n\n\n");
         int i = 1;
         while(arraylist != NULL) {
-            printf("%d.%s\n", i, cJSON_GetObjectItem(arraylist, "nickname")->valuestring);
+            char *tname = cJSON_GetObjectItem(arraylist, "nickname")->valuestring;
+            if (strcmp(tname, account) != 0) {
+                printf("%d.%s\n", i, tname);
+                ++i;
+            }
             arraylist = arraylist->next;
-            ++i;
+        }
+        if (i == 1) {
+            return 1;
+        }else {
+            return 0;
         }
     }
 }

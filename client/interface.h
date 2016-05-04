@@ -88,8 +88,8 @@ void MainInterface(int fd) {
 void LoginInterface(int fd) {
     int choose;
 
-    system("clear");
     while (1) {
+        system("clear");
         printf("----------------------------------------\n");
         printf("1.个人信息\n");
         printf("2.全部好友\n");
@@ -244,12 +244,33 @@ void DeleteFriend(int fd) {
 
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend */
 void ShowLifeFriend(int fd) {
+    int choose;    
+
     printf("显示在线好友\n");
-    _ShowLifeFriend(myinfo.account, fd);
-    printf("\n\n\n\n按任意键返回上一层:\n");
-    getchar();
-    getchar();
-    LoginInterface(fd);
+    int num = _ShowLifeFriend(myinfo.account, fd);
+    if (num == 1) {
+        printf("\n\n当前没有好友在线\n");
+        printf("\n按任意键返回上一层\n\n");
+        getchar();
+        getchar();
+        LoginInterface(fd);
+    }else {
+        printf("\n\n1.聊天\n");
+        printf("0.返回上一层\n");
+        printf("\n\n\n\n请选择:\n");
+        scanf("%d", &choose);
+        switch(choose) {
+            case 1:
+                _HandlerChat(myinfo.account, fd);
+                break;
+            case 0:
+                LoginInterface(fd);
+                break;
+            default:
+                LoginInterface(fd);
+                break;
+        }
+    }
 }
 
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend -> SelectOneFriendChat */
@@ -270,6 +291,7 @@ void ViewOnlineGroup(int fd) {
     scanf("%d", &choose);
     switch(choose) {
         case 1:
+            _HandlerChat(myinfo.account, fd);
             break;
         case 2:
             CreateGroupChat(fd);
@@ -303,6 +325,8 @@ void CreateGroupChat(int fd) {
 void UserMessage(int fd) {
     printf("用户信息:");
     _UserMessage(myinfo.account, fd);
+
+    HandlerMessage(fd);
     printf("\n\n\n\n按任意键返回上一层:\n");
     getchar();
     getchar();
@@ -312,6 +336,7 @@ void UserMessage(int fd) {
 /* UserLogin -> UserMessage -> HandlerMessage */
 void HandlerMessage(int fd) {
     printf("处理消息\n");
+    _HandlerMessage(myinfo.account, fd);
 }
 
 
