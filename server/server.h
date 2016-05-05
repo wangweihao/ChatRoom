@@ -172,6 +172,14 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             printf("Handler Chat Message\n");
             HandleChatMessage(message, connect, sockfd); 
             break;
+        case 12:
+            printf("Handler Group Chat\n");
+            HandleJoinGroupChat(message, connect, sockfd);
+            break;
+        case 13:
+            printf("Handler Group Message\n");
+            HandleGroupMessage(message, connect, sockfd);
+            break;
         default:
             break;
     }

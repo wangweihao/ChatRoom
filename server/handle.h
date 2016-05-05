@@ -37,6 +37,63 @@ void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd);
 void HandleUserMessage(cJSON *message, MYSQL *connect, int fd);
 void HandleChat(cJSON *message, MYSQL *connect, int fd);
 void HandleChatMessage(cJSON *message, MYSQL *connect, int fd);
+void HandleJoinGroupChat(cJSON *message, MYSQL *connect, int fd);
+void HandleGroupMessage(cJSON *message, MYSQL *connect, int fd);
+
+/* 将消息转发给群组的每一个人，除本人外
+ * input quit, recv quit */
+void HandleGroupMessage(cJSON *message, MYSQL *connect, int fd) {
+    printf("Handler Group Message\n");
+    cJSON *ret;
+    ret = cJSON_CreateObject();
+    char *name = cJSON_GetObjectItem(message, "name")->valuestring;
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    char *info = cJSON_GetObjectItem(message, "info")->valuestring;
+    int index = 0;
+    cJSON_AddStringToObject(ret, "info", info);
+    cJSON_AddStringToObject(ret, "account", account);
+    char *buffer = cJSON_Print(ret);
+    for (; index < MAXGROUP; ++index) {
+        if (strcmp(onlineGroup.group[index].name, name) == 0) {
+            struct Node *head = NULL;
+            head = onlineGroup.group[index].head;
+            while (head != NULL) {
+                send(head->sockfd, buffer, strlen(buffer), 0);
+                head = head->next;
+            }
+            break;
+        }
+    }
+}
+
+/* 将用户加入 OnlineGroup 里*/
+void HandleJoinGroupChat(cJSON *message, MYSQL *connect, int fd) {
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    char *name = cJSON_GetObjectItem(message, "name")->valuestring;
+    int index = 0;
+    printf("Handler Join Group Chat\n");
+    for (; index < MAXGROUP; ++index) {
+        if (strcmp(onlineGroup.group[index].name, name) == 0) {
+            break;
+        }
+    }
+    printf("index:%d\n", index);
+    printf("1\n");
+    if (index == MAXGROUP) {
+        printf("not found...\n");
+    }else {
+        if (SearchGroup(onlineGroup.group[index].head, account) == 0) {
+            printf("2\n");
+            struct Node *node = (struct Node*)malloc(sizeof(struct Node));
+            strcpy(node->account, account);
+            node->sockfd = fd;
+            node->next = NULL;
+            printf("3\n");
+            AddGroup(onlineGroup.group[index].head, node);
+            printf("4\n");
+        } 
+    }
+}
 
 //-------------------------------------
 void HandleChatMessage(cJSON *message, MYSQL *connect, int fd) {
@@ -242,7 +299,7 @@ void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd) {
         perror("send error");
     }
 }
-,
+
 void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd) {
     printf("HandleShowLifeFriend\n");
     cJSON *ret;
@@ -517,6 +574,7 @@ void HandleUserLogin(cJSON *message, MYSQL *connect, int fd) {
     }
     retbuf = cJSON_Print(ret);
     send(fd, retbuf, strlen(retbuf), 0);
+
 }
 
 #endif

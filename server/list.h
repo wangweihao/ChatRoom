@@ -27,6 +27,17 @@ struct Node* CreateGroup();
 void AddGroup(struct Node* head, struct Node* node);
 void QuitGroup(struct Node* head, char *account);
 void PrintGroup(struct Node* head);
+int SearchGroup(struct Node* head, char *account);
+
+int SearchGroup(struct Node* head, char *account) {
+    while (head != NULL) {
+        if (strcmp(head->account, account) == 0) {
+            return 1;
+        }
+        head = head->next;
+    } 
+    return 0;
+}
 
 struct Node* CreateGroup() {
     struct Node* head = (struct Node*)malloc(sizeof(struct Node));

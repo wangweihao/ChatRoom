@@ -21,6 +21,34 @@ int _CreateGroupChat(char *account, int fd);
 int _UserMessage(char *account, int fd);
 int _HandlerMessage(char *account, int fd);
 int _HandlerChat(char *account, int fd);
+int _JoinGroupChat(char *name, char *account, int fd);
+int _HandlerGroupMessage(char *name, char *account, int fd);
+
+int _HandlerGroupMessage(char *name, char *account, int fd) {
+    printf("HandlerGroupMessage\n");
+    printf("您可以开始聊天!\n");
+    ChatAndGroupFriend(name, account, fd);
+}
+
+int _JoinGroupChat(char *name, char *account, int fd) {
+    printf("JoinGroupChat\n");
+    cJSON *info;
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 12);
+    cJSON_AddStringToObject(info, "account", account);
+    cJSON_AddStringToObject(info, "name", name);
+    char *buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if (size == length) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+    _HandlerGroupMessage(name, account, fd);
+}
 
 int _HandlerChat(char *account, int fd) {
     cJSON *info;
@@ -401,6 +429,7 @@ int _UserLogin(UserInfo *user, int fd) {
             printf("登录成功...\n");
         } else {
             printf("登录失败...\n");
+            return -1;
         }
         system("clear");
         printf("%s\n", cJSON_GetObjectItem(retmsg, "value")->valuestring);

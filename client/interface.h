@@ -75,8 +75,10 @@ void MainInterface(int fd) {
                 break;
             case 3:
                 ViewMyInfo(fd);
+                break;
             case 4:
                 ShowAllFriend(fd);
+                break;
             default:
                 break;
         }
@@ -291,7 +293,7 @@ void ViewOnlineGroup(int fd) {
     scanf("%d", &choose);
     switch(choose) {
         case 1:
-            _HandlerChat(myinfo.account, fd);
+            JoinGroupChat(fd);
             break;
         case 2:
             CreateGroupChat(fd);
@@ -307,7 +309,20 @@ void ViewOnlineGroup(int fd) {
 
 /* UserLogin -> ViewOnlineGroup -> JoinGroupChat */
 void JoinGroupChat(int fd) {
+    char name[128];
+    cJSON *info;
+
     printf("加入群聊\n");
+    printf("请输入群名称:");
+ 
+    bzero(name, 128);
+    scanf("%s", name); 
+    printf("加入群后，您将收到该群消息，输入\"quit\"退出!\n");
+    sleep(1);
+    printf("加入成功...请稍后");
+    sleep(2);
+    _JoinGroupChat(name, myinfo.account, fd);
+    ViewOnlineGroup(fd);
 }
 
 /* UserLogin -> ViewOnlineGroup -> CreateGroupChat */
