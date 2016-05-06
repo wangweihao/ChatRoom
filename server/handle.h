@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <pthread.h>
 #include "list.h"
+#include "UserList.h"
 
 #define MAXCON 100
 
@@ -35,8 +36,8 @@ void HandleShowLifeFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleViewOnlineGroup(cJSON *message, MYSQL *connect, int fd);
 void HandleCreateGroup(cJSON *message, MYSQL *connect, int fd);
 void HandleUserMessage(cJSON *message, MYSQL *connect, int fd);
-void HandleChat(cJSON *message, MYSQL *connect, int fd);
-void HandleChatMessage(cJSON *message, MYSQL *connect, int fd);
+void HandleChat(cJSON *message, MYSQL *connect, int fd, User *head);
+void HandleChatMessage(cJSON *message, MYSQL *connect, int fd, User *head);
 void HandleJoinGroupChat(cJSON *message, MYSQL *connect, int fd);
 void HandleGroupMessage(cJSON *message, MYSQL *connect, int fd);
 
@@ -96,36 +97,41 @@ void HandleJoinGroupChat(cJSON *message, MYSQL *connect, int fd) {
 }
 
 //-------------------------------------
-void HandleChatMessage(cJSON *message, MYSQL *connect, int fd) {
+void HandleChatMessage(cJSON *message, MYSQL *connect, int fd, User *head) {
     printf("Handle Chat Message\n");
-    int index = 0;
     cJSON *ret;
 
     char *name = cJSON_GetObjectItem(message, "name")->valuestring;
-    char *myName = cJSON_GetObjectItem(message, "myName")->valuestring;
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
     char *info = cJSON_GetObjectItem(message, "info")->valuestring;
-    for(; index < MAXCON; ++index) {
-       if(strcmp(name, onlinePeople[index].name) == 0) {
-            break; 
-       } 
+ 
+    if (strcmp("quit", info) == 0) {
+        QuitUserList(head, account);
     }
-    
     ret = cJSON_CreateObject();
-    cJSON_AddStringToObject(ret, "info", info);
-    cJSON_AddStringToObject(ret, "name", name);
-    char *buffer = cJSON_Print(ret);
-
-    size_t length = strlen(buffer);
-    ssize_t size = send(onlinePeople[index].sockfd, buffer, length, 0);
-    if (size == length) {
-        printf("send success!\n");
+    User* one = SearchUser(head, name);
+    if (one == NULL) {
+        printf("对方不在线！\n");
+        /* 对方不在线，退出 */
+        cJSON_AddStringToObject(ret, "info", "quit");
     }else {
-        printf("send error!\n");
+        cJSON_AddStringToObject(ret, "info", info);
+    }
+    cJSON_AddStringToObject(ret, "account", account);
+    char* buffer = cJSON_Print(ret);
+    size_t length = strlen(buffer);
+    ssize_t size = send(one->socket, buffer, length, 0);
+    if (length == size) {
+        printf("%s->%s 发送消息成功\n", name, account);
+    }else {
+        printf("%s->%s 发送消息失败\n", name, account);
     }
 }
 
-void HandleChat(cJSON *message, MYSQL *connect, int fd) {
+void HandleChat(cJSON *message, MYSQL *connect, int fd, User *head) {
     printf("Handle Chat\n");
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    AddUserList(head, account, fd);
 }
 
 void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {

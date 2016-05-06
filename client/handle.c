@@ -83,7 +83,7 @@ void ChatAndOneFriend(char *account, char *name, int fd) {
         info = cJSON_CreateObject();
         cJSON_AddNumberToObject(info, "type", 11);
         cJSON_AddStringToObject(info, "name", name);
-        cJSON_AddStringToObject(info, "myName", account);
+        cJSON_AddStringToObject(info, "account", account);
         cJSON_AddStringToObject(info, "info", buffer);
         buf = cJSON_Print(info);
 

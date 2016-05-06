@@ -27,6 +27,7 @@
 
 #define BACKLOG 1024
 
+User* Uhead;
 
 void InitServer(char *ip, int port);
 void* HandleClient(void*);
@@ -48,6 +49,8 @@ void InitOnlineGroup() {
 }
 
 void InitServer(char *ip, int port) {
+    Uhead = CreateUserList();
+
     struct sockaddr_in server;
     struct sockaddr_in client;
     socklen_t len = sizeof(client);
@@ -166,11 +169,11 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             break;
         case 10:
             printf("Handler Chat\n");
-            HandleChat(message, connect, sockfd);
+            HandleChat(message, connect, sockfd, Uhead);
             break;
         case 11:
             printf("Handler Chat Message\n");
-            HandleChatMessage(message, connect, sockfd); 
+            HandleChatMessage(message, connect, sockfd, Uhead); 
             break;
         case 12:
             printf("Handler Group Chat\n");
