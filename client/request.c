@@ -19,7 +19,7 @@ int _ShowLifeFriend(char *account, int fd);
 int _ViewOnlineGroup(int fd);
 int _CreateGroupChat(char *account, int fd);
 int _UserMessage(char *account, int fd, char name[][40], int* count);
-int _HandlerMessage(char *account, int fd);
+int _HandlerMessage(char *account, char *friendName, int fd, int flag);
 int _HandlerChat(char *account, int fd);
 int _JoinGroupChat(char *name, char *account, int fd);
 int _HandlerGroupMessage(char *name, char *account, int fd);
@@ -120,8 +120,38 @@ int _HandlerChat(char *account, int fd) {
     ChatAndOneFriend(account, name, fd);
 }
 
-int _HandlerMessage(char *account, int fd) {
+int _HandlerMessage(char *account, char *friendName, int fd, int flag) {
     printf("处理消息：_HandlerMessage\n");
+    
+    cJSON *info;
+    char *buffer;
+
+    info = cJSON_CreateObject();
+
+    cJSON_AddNumberToObject(info, "type", 16);
+    cJSON_AddNumberToObject(info, "flag", flag);
+    cJSON_AddStringToObject(info, "account", account);
+    cJSON_AddStringToObject(info, "friendName", friendName);
+
+    buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    
+    if (length == size) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+
+
+    if (flag == 1) {
+        printf("您同意了 %s 的请求，对方现已是您的好友...\n", friendName);
+
+    }else if(flag == 2){
+        printf("您拒绝了 %s 的请求...\n", friendName);
+    }
+
 }
 
 int _UserMessage(char *account, int fd, char name[][40], int *count) {

@@ -194,6 +194,7 @@ int HandleMessage(int sockfd, MYSQL *connect) {
         case 16:
             printf("Handler Message\n");
             HandleUnReadMessage(message, connect, sockfd);
+            break;
         default:
             break;
     }

@@ -47,6 +47,118 @@ void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd);
 void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd) {
     printf("Handle Message\n");
 
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    char *friendName = cJSON_GetObjectItem(message, "friendName")->valuestring;
+    int flag = cJSON_GetObjectItem(message, "flag")->valueint;
+
+    char GetUserUidSql[128];
+    char GetFriendIdSql[128];
+    char DeleteMessageSql[128];
+    
+    bzero(GetUserUidSql, 128);
+    bzero(GetFriendIdSql, 128);
+    bzero(DeleteMessageSql, 128);
+
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    
+    char uid[20];
+    char friendId[20];
+
+    bzero(uid, 20);
+    bzero(friendId, 20);
+    
+    strcpy(GetUserUidSql, "select uid from UserInfo where account = \"");
+    strcat(GetUserUidSql, account);
+    strcat(GetUserUidSql, "\";");
+    strcpy(GetFriendIdSql, "select uid from UserInfo where account = \"");
+    strcat(GetFriendIdSql, friendName);
+    strcat(GetFriendIdSql, "\";");
+    
+    printf("%s\n", GetUserUidSql);
+    printf("%s\n", GetFriendIdSql);
+
+
+    if(mysql_query(connect, GetUserUidSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    strcpy(uid, row[0]);
+
+    if(mysql_query(connect, GetFriendIdSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if (!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    strcpy(friendId, row[0]);
+
+    printf("Uid:%s  friendId:%s\n", uid, friendId);
+
+    strcpy(DeleteMessageSql, "delete from UserMessage where uid = \"");
+    strcat(DeleteMessageSql, uid);
+    strcat(DeleteMessageSql, "\";");
+
+    if (mysql_query(connect, DeleteMessageSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    char InsertUserAndFriend[128];
+    char InsertFriendAndUser[128];
+    bzero(InsertUserAndFriend, 128);
+    bzero(InsertFriendAndUser, 128);
+    if (flag == 1) {
+        //同意请求
+        //插入好友关系 我->好友
+        printf("flag == 1 同意请求...\n");
+        strcpy(InsertUserAndFriend, "insert into UserFriend (uid, friendId, nickname) values (\"");
+        strcat(InsertUserAndFriend, uid);
+        strcat(InsertUserAndFriend, "\", \"");
+        strcat(InsertUserAndFriend, friendId);
+        strcat(InsertUserAndFriend, "\", \"");
+        strcat(InsertUserAndFriend, friendName);
+        strcat(InsertUserAndFriend, "\");");
+        if (mysql_query(connect, InsertUserAndFriend)) {
+            printf("查询失败...\n");
+        }else {
+            printf("查询成功...\n");
+        }
+        //插入好友关系 好友->我
+        strcpy(InsertFriendAndUser, "insert into UserFriend (uid, friendId, nickname) values (\"");
+        strcat(InsertFriendAndUser, friendId);
+        strcat(InsertFriendAndUser, "\", \"");
+        strcat(InsertFriendAndUser, uid);
+        strcat(InsertFriendAndUser, "\", \"");
+        strcat(InsertFriendAndUser, account);
+        strcat(InsertFriendAndUser, "\");");
+        if (mysql_query(connect, InsertUserAndFriend)) {
+            printf("查询失败...\n");
+        }else {
+            printf("查询成功...\n");
+        }
+
+    }else if(flag == 2){
+        //拒绝请求
+        printf("flag == 2 拒绝请求...\n");
+    }
 }
 
 void HandleDeleteFriend(cJSON *message, MYSQL *connect, int fd) {

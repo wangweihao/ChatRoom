@@ -386,10 +386,10 @@ void UserMessage(int fd) {
         scanf("%d", &choose);
         if (choose == 1) {
             printf("同意\n");
-            HandlerMessage(fd, name[count], 1);
+            HandlerMessage(fd, name[i], 1);
         }else if(choose == 2) {
             printf("否决\n");
-            HandlerMessage(fd, name[count], 2);
+            HandlerMessage(fd, name[i], 2);
         }
     }
 
