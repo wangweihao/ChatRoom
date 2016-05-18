@@ -40,6 +40,179 @@ void HandleChat(cJSON *message, MYSQL *connect, int fd, User *head);
 void HandleChatMessage(cJSON *message, MYSQL *connect, int fd, User *head);
 void HandleJoinGroupChat(cJSON *message, MYSQL *connect, int fd);
 void HandleGroupMessage(cJSON *message, MYSQL *connect, int fd);
+void HandleAddFriend(cJSON *message, MYSQL *connect, int fd);
+void HandleDeleteFriend(cJSON *message, MYSQL *connect, int fd);
+void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd);
+
+void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd) {
+    printf("Handle Message\n");
+
+}
+
+void HandleDeleteFriend(cJSON *message, MYSQL *connect, int fd) {
+    printf("HandleDeleteFriend\n");
+
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    char *friendName = cJSON_GetObjectItem(message, "friendName")->valuestring;
+    char GetUserUidSql[128];
+    char GetFriendIdSql[128];
+    char DeleteFriendSql[128];
+    
+    bzero(GetUserUidSql, 128);
+    bzero(GetFriendIdSql, 128);
+    bzero(DeleteFriendSql, 128);
+
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    
+    char uid[20];
+    char friendId[20];
+
+    bzero(uid, 20);
+    bzero(friendId, 20);
+    
+    strcpy(GetUserUidSql, "select uid from UserInfo where account = \"");
+    strcat(GetUserUidSql, account);
+    strcat(GetUserUidSql, "\";");
+    strcpy(GetFriendIdSql, "select uid from UserInfo where account = \"");
+    strcat(GetFriendIdSql, friendName);
+    strcat(GetFriendIdSql, "\";");
+    
+    printf("%s\n", GetUserUidSql);
+    printf("%s\n", GetFriendIdSql);
+
+
+    if(mysql_query(connect, GetUserUidSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    strcpy(uid, row[0]);
+
+    if(mysql_query(connect, GetFriendIdSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if (!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    strcpy(friendId, row[0]);
+
+    printf("Uid:%s  friendId:%s\n", uid, friendId);
+
+    
+    /* 从 UserFriend 表删除好友关系 */
+    strcpy(DeleteFriendSql, "delete from UserFriend where uid = \"");
+    strcat(DeleteFriendSql, uid);
+    strcat(DeleteFriendSql, "\" and friendId = \"");
+    strcat(DeleteFriendSql, friendId);
+    strcat(DeleteFriendSql, "\";");
+    if(mysql_query(connect, DeleteFriendSql)) {
+        printf("删除失败...\n");
+    }else {
+        printf("删除成功...\n");
+    }
+    bzero(DeleteFriendSql, 128);
+    strcpy(DeleteFriendSql, "delete from UserFriend where uid = \"");
+    strcat(DeleteFriendSql, friendId);
+    strcat(DeleteFriendSql, "\" and friendId = \"");
+    strcat(DeleteFriendSql, uid);
+    strcat(DeleteFriendSql, "\";");
+    if(mysql_query(connect, DeleteFriendSql)) {
+        printf("删除失败...\n");
+    }else {
+        printf("删除成功...\n");
+    }
+}
+
+void HandleAddFriend(cJSON *message, MYSQL *connect, int fd) {
+    printf("HandleAddFriend\n");
+
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+    char *friendName = cJSON_GetObjectItem(message, "friendName")->valuestring;
+    char GetUserUidSql[128];
+    char GetFriendIdSql[128];
+    char InsertUserMessageSql[128];
+    
+    bzero(GetUserUidSql, 128);
+    bzero(GetFriendIdSql, 128);
+    bzero(InsertUserMessageSql, 128);
+
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+
+    char uid[20];
+    char friendId[20];
+
+    bzero(uid, 20);
+    bzero(friendId, 20);
+
+    strcpy(GetUserUidSql, "select uid from UserInfo where account = \"");
+    strcat(GetUserUidSql, account);
+    strcat(GetUserUidSql, "\";");
+    strcpy(GetFriendIdSql, "select uid from UserInfo where account = \"");
+    strcat(GetFriendIdSql, friendName);
+    strcat(GetFriendIdSql, "\";");
+    
+    if(mysql_query(connect, GetUserUidSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    strcpy(uid, row[0]);
+
+    if(mysql_query(connect, GetFriendIdSql)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+    if (!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+    strcpy(friendId, row[0]);
+
+    printf("Uid:%s  friendId:%s\n", uid, friendId);
+
+    /* 插入到 UserMessage 表中，对方上线处理消息同意后双方即为好友关系 */
+    strcpy(InsertUserMessageSql, "insert into UserMessage (uid, friendId) values (\"");
+    strcat(InsertUserMessageSql, friendId);
+    strcat(InsertUserMessageSql, "\", \"");
+    strcat(InsertUserMessageSql, uid);
+    strcat(InsertUserMessageSql, "\");");
+    
+    if(mysql_query(connect, InsertUserMessageSql)){
+        printf("插入失败...\n");
+    }else {
+        printf("插入成功...\n");
+    }
+}
 
 /* 将消息转发给群组的每一个人，除本人外
  * input quit, recv quit */
@@ -214,11 +387,11 @@ void HandleUserMessage(cJSON *message, MYSQL *connect, int fd) {
         char buf[128];
         printf("rowt[0]:%s\n", rowt[0]);
         printf("rowt[1]:%s\n", rowt[1]);
-        strcpy(buf, "帐号:");
-        strcat(buf, rowt[0]);
-        strcat(buf, " 用户名:");
-        strcat(buf, rowt[1]);
-        strcat(buf, " 请求添加您为好友");
+        strcpy(buf, rowt[0]);
+        //strcat(buf, rowt[0]);
+        //strcat(buf, " 用户名:");
+        //strcat(buf, rowt[1]);
+        //strcat(buf, " 请求添加您为好友");
         cJSON_AddStringToObject(one, "msg", buf);
         cJSON_AddItemToArray(array, one);
         bzero(buf, 128);
@@ -490,10 +663,13 @@ void HandleUserRegister(cJSON *message, MYSQL *connect, int fd) {
     char *secret = cJSON_GetObjectItem(message, "secret")->valuestring;
     char *nickname = cJSON_GetObjectItem(message, "nickname")->valuestring;
     char *sex = cJSON_GetObjectItem(message, "sex")->valuestring;
-    uint16_t age = cJSON_GetObjectItem(message, "age")->valueint;
+    int age = cJSON_GetObjectItem(message, "age")->valueint;
 
     char UserRegisterSql[256];
+    char _age[20];
     char *retbuf;
+    bzero(_age, 20);
+    sprintf(_age, "%d", age);
     strcpy(UserRegisterSql, "insert into UserInfo (account, secret, nickname, sex, age) values (\"");
     strcat(UserRegisterSql, account);
     strcat(UserRegisterSql, "\", \"");
@@ -503,7 +679,7 @@ void HandleUserRegister(cJSON *message, MYSQL *connect, int fd) {
     strcat(UserRegisterSql, "\", \"");
     strcat(UserRegisterSql, sex);
     strcat(UserRegisterSql, "\", \"");
-    strcat(UserRegisterSql, "18");
+    strcat(UserRegisterSql, _age);
     strcat(UserRegisterSql, "\");");
 
     printf("SQL:%s\n", UserRegisterSql);

@@ -183,6 +183,17 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             printf("Handler Group Message\n");
             HandleGroupMessage(message, connect, sockfd);
             break;
+        case 14:
+            printf("Handler Add Friend\n");
+            HandleAddFriend(message, connect, sockfd);
+            break;
+        case 15:
+            printf("Handler Delete Friend\n");
+            HandleDeleteFriend(message, connect, sockfd);
+            break;
+        case 16:
+            printf("Handler Message\n");
+            HandleUnReadMessage(message, connect, sockfd);
         default:
             break;
     }

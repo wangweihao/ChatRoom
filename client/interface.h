@@ -37,7 +37,7 @@ void ViewOnlineGroup(int fd);
 void JoinGroupChat(int fd);
 void CreateGroupChat(int fd);
 void UserMessage(int fd);
-void HandlerMessage(int fd);
+void HandlerMessage(int fd, char *friendName, int flag);
 
 
 void MainInterface(int fd) {
@@ -72,12 +72,6 @@ void MainInterface(int fd) {
                 break;
             case 2:
                 UserRegister(fd);
-                break;
-            case 3:
-                ViewMyInfo(fd);
-                break;
-            case 4:
-                ShowAllFriend(fd);
                 break;
             default:
                 break;
@@ -221,27 +215,62 @@ void ViewMyInfo(int fd) {
     printf("\n\n\n\n按任意键返回上一层:\n");
     getchar();
     getchar();
-    LoginInterface(fd);
+    //LoginInterface(fd);
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend */
 void ShowAllFriend(int fd) {
     printf("全部好友\n");
+    int choose;
     _ShowAllFriend(myinfo.account, fd);
-    printf("\n\n\n\n按任意键返回上一层:\n");
-    getchar();
-    getchar();
-    LoginInterface(fd);
+    printf("\n\n\n\n");
+    printf("1.添加好友\n");
+    printf("2.删除好友\n");
+    printf("0.返回上一层\n\n");
+    
+    printf("\n请选择:");
+    scanf("%d", &choose);
+    switch(choose) {
+        case 1:
+            AddFriend(fd);
+            break;
+        case 2:
+            DeleteFriend(fd);
+        case 0:
+            return;
+    }
+
+    //LoginInterface(fd);
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend -> AddFriend */
 void AddFriend(int fd) {
     printf("添加好友\n");
+
+    char name[40];
+    bzero(name, 40);
+    printf("请输入添加好友的帐号（quit退出）:");
+    scanf("%s", name);
+    if (strcmp(name, "quit") == 0) {
+        return;
+    }else {
+        _AddFriend(myinfo.account, name, fd);
+    }
 }
 
 /* UserLogin -> ViewMyInfo -> ShowAllFriend -> DeleteFriend */
 void DeleteFriend(int fd) {
     printf("删除好友\n");
+
+    char name[40];
+    bzero(name, 40);
+    printf("请输入删除好友的帐号（quit 退出）:");
+    scanf("%s", name);
+    if (strcmp(name, "quit") == 0) {
+        return;
+    }else {
+        _DeleteFriend(myinfo.account, name, fd);
+    }
 }
 
 /* UserLogin -> ViewMyInfo -> ShowLifeFriend */
@@ -266,10 +295,10 @@ void ShowLifeFriend(int fd) {
                 _HandlerChat(myinfo.account, fd);
                 break;
             case 0:
-                LoginInterface(fd);
+                //LoginInterface(fd);
                 break;
             default:
-                LoginInterface(fd);
+                //LoginInterface(fd);
                 break;
         }
     }
@@ -299,7 +328,7 @@ void ViewOnlineGroup(int fd) {
             CreateGroupChat(fd);
             break;
         case 0:
-            LoginInterface(fd);
+            //LoginInterface(fd);
             break;
         default:
             LoginInterface(fd);
@@ -333,25 +362,50 @@ void CreateGroupChat(int fd) {
     printf("\n\n\n\n按任意键返回上一层:\n");
     getchar();
     getchar();
-    LoginInterface(fd);
+    //LoginInterface(fd);
 }
 
 /* UserLogin -> UserMessage */
 void UserMessage(int fd) {
-    printf("用户信息:");
-    _UserMessage(myinfo.account, fd);
+    char name[20][40];
+    int count = 0;
+    int choose = 0;
+    int i = 0;
 
-    HandlerMessage(fd);
+    for (i = 0; i < 20; ++i) {
+        bzero(name[i], 40);
+    }
+
+    printf("用户信息:");
+    _UserMessage(myinfo.account, fd, name, &count);
+
+    for (i = 0; i < count; ++i) {
+        printf("是否同意陌生人:%s 的好友添加请求\n", name[i]);
+        printf("1.同意 2.否决");
+        printf("请输入:");
+        scanf("%d", &choose);
+        if (choose == 1) {
+            printf("同意\n");
+            HandlerMessage(fd, name[count], 1);
+        }else if(choose == 2) {
+            printf("否决\n");
+            HandlerMessage(fd, name[count], 2);
+        }
+    }
+
     printf("\n\n\n\n按任意键返回上一层:\n");
     getchar();
     getchar();
-    LoginInterface(fd);
+    //LoginInterface(fd);
 }
 
 /* UserLogin -> UserMessage -> HandlerMessage */
-void HandlerMessage(int fd) {
+void HandlerMessage(int fd, char *friendName, int flag) {
     printf("处理消息\n");
-    _HandlerMessage(myinfo.account, fd);
+    /* Handle Messasge 
+     * 1 表示同意，删除该消息，并且在数据库中建立双方的关系 
+     * 2 表示否定，删除该消息，其余什么也不做 */
+    _HandlerMessage(myinfo.account, friendName, fd, flag);
 }
 
 

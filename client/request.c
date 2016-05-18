@@ -18,11 +18,52 @@ int _ShowAllFriend(char *account, int fd);
 int _ShowLifeFriend(char *account, int fd);
 int _ViewOnlineGroup(int fd);
 int _CreateGroupChat(char *account, int fd);
-int _UserMessage(char *account, int fd);
+int _UserMessage(char *account, int fd, char name[][40], int* count);
 int _HandlerMessage(char *account, int fd);
 int _HandlerChat(char *account, int fd);
 int _JoinGroupChat(char *name, char *account, int fd);
 int _HandlerGroupMessage(char *name, char *account, int fd);
+int _AddFriend(char *account, char *friendName, int fd);
+int _DeleteFriend(char *account, char *friendName, int fd);
+
+int _DeleteFriend(char *account, char *friendName, int fd) {
+    printf("_DeleteFriend\n");
+    cJSON *info;
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 15);
+    cJSON_AddStringToObject(info, "account", account);
+    cJSON_AddStringToObject(info, "friendName", friendName);
+    char *buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if (length == size) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+}
+
+int _AddFriend(char *account, char *friendName, int fd) {
+    printf("_AddFriend\n");
+    cJSON *info;
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 14);
+    cJSON_AddStringToObject(info, "account", account);
+    cJSON_AddStringToObject(info, "friendName", friendName);
+    char *buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+    if (length == size) {
+        printf("send success!\n");
+    }else {
+        printf("send error!\n");
+    }
+}
+
 
 int _HandlerGroupMessage(char *name, char *account, int fd) {
     printf("HandlerGroupMessage\n");
@@ -83,7 +124,7 @@ int _HandlerMessage(char *account, int fd) {
     printf("处理消息：_HandlerMessage\n");
 }
 
-int _UserMessage(char *account, int fd) {
+int _UserMessage(char *account, int fd, char name[][40], int *count) {
     cJSON *info;
     char *buffer;
     char retbuffer[1024];
@@ -115,10 +156,14 @@ int _UserMessage(char *account, int fd) {
         cJSON *mesg = cJSON_GetObjectItem(rec, "message");
         cJSON *list = mesg->child;
         int i = 1;
+        *count = 0;
         while(list != NULL) {
-            printf("(%d).%s\n", i, cJSON_GetObjectItem(list, "msg")->valuestring);
+            strcpy(name[*count], cJSON_GetObjectItem(list, "msg")->valuestring);
+            printf("(%d).%s\n", i, name[*count]);
+
             list = list->next;
             i++;
+            (*count)++;
         }
         printf("\n\n\n");
     }
@@ -230,12 +275,13 @@ int _ShowLifeFriend(char *account, int fd) {
         printf("send error!\n");
     }
 
-    printf("233333\n");
+    printf("244444\n");
     if(recv(fd, retbuffer, 1024, 0) <= 0) {
+        printf("if\n");
         printf("系统错误...请稍后再试...\n");
     }else {
-        printf("233333\n");
-        //printf("retbuffer:%s\n", retbuffer);       
+        printf("else\n");
+        printf("retbuffer:%s\n", retbuffer);       
         cJSON *friendarray;
         cJSON *info = cJSON_Parse(retbuffer);
         int arraysize;
