@@ -43,6 +43,104 @@ void HandleGroupMessage(cJSON *message, MYSQL *connect, int fd);
 void HandleAddFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleDeleteFriend(cJSON *message, MYSQL *connect, int fd);
 void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd);
+void HandleSetUserOnline(cJSON *message, MYSQL *connect, int fd);
+
+void HandleSetUserUpLine(cJSON *message, MYSQL *connect, int fd);
+
+
+/*
+ *  mark 18
+ *  设置用户下线，当用户退出聊天时，修改该用户的状态为下线
+ * */
+void HandleSetUserUpline(cJSON *message, MYSQL *connect, int fd) {
+    printf("HandleSetUserUpline\n");
+    
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+
+    char ObtainUserId[128];
+    char SetUserFriendId[128];
+    
+    bzero(ObtainUserId, 128);
+    bzero(SetUserFriendId, 128);
+
+    strcpy(ObtainUserId, "select uid from UserInfo where account = \"");
+    strcat(ObtainUserId, account);
+    strcat(ObtainUserId, "\";");
+    if (mysql_query(connect, ObtainUserId)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+    
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+
+    strcpy(SetUserFriendId, "update UserFriend set online = 0 where friendId = \"");
+    strcat(SetUserFriendId, row[0]);
+    strcat(SetUserFriendId, "\";");
+
+    if (mysql_query(connect, SetUserFriendId)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+
+}
+
+
+/*
+ * mark 17
+ *  设置用户上线，当用户进入聊天时，修改该用户的状态为在线。
+ * */
+void HandleSetUserOnline(cJSON *message, MYSQL *connect, int fd) {
+    printf("HandleSetUserOnline\n");
+
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+
+    char *account = cJSON_GetObjectItem(message, "account")->valuestring;
+
+    char ObtainUserId[128];
+    char SetUserFriendId[128];
+    
+    bzero(ObtainUserId, 128);
+    bzero(SetUserFriendId, 128);
+
+    strcpy(ObtainUserId, "select uid from UserInfo where account = \"");
+    strcat(ObtainUserId, account);
+    strcat(ObtainUserId, "\";");
+    if (mysql_query(connect, ObtainUserId)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+    
+    if(!(res = mysql_store_result(connect))) {
+        printf("获取结果失败...\n");
+    }else {
+        printf("获取结果成功...\n");
+    }
+
+    row = mysql_fetch_row(res);
+
+    strcpy(SetUserFriendId, "update UserFriend set online = 1 where friendId = \"");
+    strcat(SetUserFriendId, row[0]);
+    strcat(SetUserFriendId, "\";");
+
+    if (mysql_query(connect, SetUserFriendId)) {
+        printf("查询失败...\n");
+    }else {
+        printf("查询成功...\n");
+    }
+}
 
 void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd) {
     printf("Handle Message\n");
@@ -129,11 +227,11 @@ void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd) {
         //同意请求
         //插入好友关系 我->好友
         printf("flag == 1 同意请求...\n");
-        strcpy(InsertUserAndFriend, "insert into UserFriend (uid, friendId, nickname) values (\"");
+        strcpy(InsertUserAndFriend, "insert into UserFriend (uid, friendId, online, nickname) values (\"");
         strcat(InsertUserAndFriend, uid);
         strcat(InsertUserAndFriend, "\", \"");
         strcat(InsertUserAndFriend, friendId);
-        strcat(InsertUserAndFriend, "\", \"");
+        strcat(InsertUserAndFriend, "\", 1, \"");
         strcat(InsertUserAndFriend, friendName);
         strcat(InsertUserAndFriend, "\");");
         if (mysql_query(connect, InsertUserAndFriend)) {
@@ -142,14 +240,14 @@ void HandleUnReadMessage(cJSON *message, MYSQL *connect, int fd) {
             printf("查询成功...\n");
         }
         //插入好友关系 好友->我
-        strcpy(InsertFriendAndUser, "insert into UserFriend (uid, friendId, nickname) values (\"");
+        strcpy(InsertFriendAndUser, "insert into UserFriend (uid, friendId, online, nickname) values (\"");
         strcat(InsertFriendAndUser, friendId);
         strcat(InsertFriendAndUser, "\", \"");
         strcat(InsertFriendAndUser, uid);
-        strcat(InsertFriendAndUser, "\", \"");
+        strcat(InsertFriendAndUser, "\", 1, \"");
         strcat(InsertFriendAndUser, account);
         strcat(InsertFriendAndUser, "\");");
-        if (mysql_query(connect, InsertUserAndFriend)) {
+        if (mysql_query(connect, InsertFriendAndUser)) {
             printf("查询失败...\n");
         }else {
             printf("查询成功...\n");

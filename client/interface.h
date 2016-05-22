@@ -114,6 +114,7 @@ void LoginInterface(int fd) {
                 break;
             case 0:
                 system("clear");
+                _UserQuit(myinfo.account, fd);
                 return;
                 break;
             default:

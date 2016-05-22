@@ -61,7 +61,10 @@ void ChatAndGroupFriend(char *name, char *account, int fd) {
         buf = cJSON_Print(info);
 
         if(strcmp(buffer, "quit") == 0) {
-            pthread_join(tid, NULL);
+            //pthread_join(tid, NULL);
+            //pthread_kill(tid, 0);
+            //pthread_exit(0);
+            pthread_cancel(tid);
             break;
         }
         send(fd, buf, strlen(buf), 0);
@@ -93,6 +96,7 @@ void ChatAndOneFriend(char *account, char *name, int fd) {
         if(strcmp(buffer, "quit") == 0) {
             //pthread_join(tid, NULL);
             //break;
+            pthread_cancel(tid);
             return;
         }
         send(fd, buf, strlen(buf), 0);

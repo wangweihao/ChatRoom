@@ -25,6 +25,52 @@ int _JoinGroupChat(char *name, char *account, int fd);
 int _HandlerGroupMessage(char *name, char *account, int fd);
 int _AddFriend(char *account, char *friendName, int fd);
 int _DeleteFriend(char *account, char *friendName, int fd);
+int _UserQuit(char *account, int fd);
+
+int _UserQuit(char *account, int fd) {
+    _SetUserUpline(account, fd);
+}
+
+int _SetUserOnline(char *account, int fd);
+int _SetUserUpline(char *account, int fd);
+
+int _SetUserOnline(char *account, int fd) {
+    printf("_SetUserOnline\n");
+    cJSON *info;
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 17);
+    cJSON_AddStringToObject(info, "account", account);
+    char *buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+
+    if(length == size) {
+        printf("send success\n");
+    }else {
+        printf("send error\n");
+    }
+}
+
+int _SetUserUpline(char *account, int fd) {
+    //printf("_SetUserUpline\n");
+    cJSON *info;
+
+    info = cJSON_CreateObject();
+    cJSON_AddNumberToObject(info, "type", 18);
+    cJSON_AddStringToObject(info, "account", account);
+    char *buffer = cJSON_Print(info);
+
+    size_t length = strlen(buffer);
+    ssize_t size = send(fd, buffer, length, 0);
+
+    if(length == size) {
+        printf("\n");
+    }else {
+        printf("send error\n");
+    }
+}
 
 int _DeleteFriend(char *account, char *friendName, int fd) {
     printf("_DeleteFriend\n");
@@ -305,7 +351,6 @@ int _ShowLifeFriend(char *account, int fd) {
         printf("send error!\n");
     }
 
-    printf("244444\n");
     if(recv(fd, retbuffer, 1024, 0) <= 0) {
         printf("if\n");
         printf("系统错误...请稍后再试...\n");
@@ -503,6 +548,7 @@ int _UserLogin(UserInfo *user, int fd) {
         ret = cJSON_GetObjectItem(retmsg, "ret")->valueint;
         if(ret == 0) {
             printf("登录成功...\n");
+            _SetUserOnline(user->account, fd);
         } else {
             printf("登录失败...\n");
             return -1;

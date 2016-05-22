@@ -195,6 +195,14 @@ int HandleMessage(int sockfd, MYSQL *connect) {
             printf("Handler Message\n");
             HandleUnReadMessage(message, connect, sockfd);
             break;
+        case 17:
+            printf("Handler Set User Online\n");
+            HandleSetUserOnline(message, connect, sockfd);
+            break;
+        case 18:
+            printf("Handler Set User Upline\n");
+            HandleSetUserUpline(message, connect, sockfd);
+            break;
         default:
             break;
     }
