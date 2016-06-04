@@ -80,6 +80,7 @@ void InitServer(char *ip, int port) {
     }
 
     while (1) {
+        //接受连接
         int accept_fd = accept(sockfd, (struct sockaddr*)&client, &len);
         if(accept_fd == -1) {
             perror("accept error");
@@ -87,6 +88,8 @@ void InitServer(char *ip, int port) {
         }else {
             printf("accept fd:%d\n", accept_fd);
             pthread_t tid;
+            //创建线程去处理连接的客户端
+            //调用 HandleClient 函数
             if(pthread_create(&tid, NULL, &HandleClient, &accept_fd) != 0) {
                 perror("thread_create error");
                 continue;

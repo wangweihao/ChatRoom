@@ -27,12 +27,12 @@ void* thread_start_chat(void *arg) {
         mesg = cJSON_Parse(buffer);
         char *info = cJSON_GetObjectItem(mesg, "info")->valuestring;
         char *account = cJSON_GetObjectItem(mesg, "account")->valuestring;
-        //if(strcmp(info, "quit") == 0) {
-        //    bzero(buffer, 256);
-        //    strcpy(buffer, "quit");
-        //    send(fd, buffer, 256, 0);
-        //    break;
-        //}
+        if(strcmp(info, "quit") == 0) {
+            bzero(buffer, 256);
+            strcpy(buffer, "quit");
+            send(fd, buffer, 256, 0);
+            break;
+        }
         printf("%s:%s\n", account, info);
     }
 }
@@ -43,6 +43,7 @@ void ChatAndGroupFriend(char *name, char *account, int fd) {
     cJSON *info;
     char *buf;
 
+    //创建线程去执行 thread_start_chat 聊天函数
     if (pthread_create(&tid, NULL, thread_start_chat, &fd) != 0) {
         perror("pthread_create() error!\n");
         return;
@@ -53,6 +54,7 @@ void ChatAndGroupFriend(char *name, char *account, int fd) {
         bzero(buffer, 256);
         printf(":");
         scanf("%s", buffer);
+        //解析 JSON 
         info = cJSON_CreateObject();
         cJSON_AddNumberToObject(info, "type", 13);
         cJSON_AddStringToObject(info, "account", account);
@@ -61,9 +63,6 @@ void ChatAndGroupFriend(char *name, char *account, int fd) {
         buf = cJSON_Print(info);
 
         if(strcmp(buffer, "quit") == 0) {
-            //pthread_join(tid, NULL);
-            //pthread_kill(tid, 0);
-            //pthread_exit(0);
             pthread_cancel(tid);
             break;
         }
